@@ -1,7 +1,9 @@
 insaned
 =======
 
-Insaned is a simple linux daemon for polling button presses on SANE-managed scanners. It's simpler to setup than alternatives such as **scanbd**.
+Insaned is a simple linux daemon for polling button presses on SANE-managed scanners. 
+
+It's simpler to setup than alternatives such as **scanbd**, but you will need a scanner which **exposes buttons as sensors**.
 
 > :small_blue_diamond: **this project is a fork**
 >
@@ -26,9 +28,15 @@ for other operating systems/architectures see the build section below.
 
 ## usage
 
-rename `_example.env` to `.env` and edit for your scanner
+First check which compatible sensors/buttons your scanner has by running `insaned -L` - this should provide a list with names.
+
+Assuming you only want to use the 'scan' button -- rename `_example.env` to `.env` and edit for your scanner
 
 for **[scanservjs](https://github.com/sbs20/scanservjs)**  support you will need an instance hosted either locally or remotely, change the `SCAN_SCRIPT` variable in your .env file to `scanservjs`.
+
+once the above is complete, simply hit the 'Scan' button on your compatible scanner and the script should kick-in.
+
+To get other buttons on your scanner working, you'll need to create a new script in `/etc/insaned/events` with the same name as listed in `insaned -L`. Use the `scanimage` and `scanservjs` scripts as examples.
 
 ## build
 

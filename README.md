@@ -20,7 +20,7 @@ this version incorporates a few changes including:
 - `make debian` for creating a debian package 
 
 ## installation
-a package compiled for `armv6` (compatible with a Raspberry Pi Zero W) is included in each [release](https://gitlab.com/xeijin-dev/insaned/-/releases), ssh into your raspberry pi and use `wget` or `curl`
+a package compiled for `armv6` (compatible with a Raspberry Pi Zero W) is included in each **[release](https://gitlab.com/xeijin-dev/insaned/-/releases)**, ssh into your raspberry pi and use `wget` or `curl`
 
 for other operating systems/architectures see the build section below.
 

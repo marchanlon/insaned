@@ -54,18 +54,18 @@ InsaneDaemon::InsaneDaemon()
 
 InsaneDaemon::~InsaneDaemon() noexcept
 {
+    SANE_Handle mHandle2 = mHandle;
     log("Exiting...", 1);
     close();
     try {
-        mHandle = nullptr;
-        log("Calling sane_exit", 1);
-        sane_exit();
-
+        if (mHandle2) {
+            log("Calling sane_exit", 1);
+            sane_exit();
+        }
+        log("Finished", 1);
         ::close(0);
         ::close(1);
         ::close(2);
-
-        log("Finished", 1);
     } catch (...) {
         log("Error calling sane_exit!", 0);
     }

@@ -20,6 +20,6 @@ clean :
 	rm -rf src/*.o $(PROJECT)
 
 debian : clean
-	 dpkg-buildpackage -d -b -us -uc
-	 # build debian package from sources (-b) on bullseye, -d is to skip dh-systemd error, which appears to be a stale dependency
+	 dpkg-buildpackage -b -us -uc
+	 # build debian package from sources (-b) 
 

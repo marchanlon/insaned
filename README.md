@@ -16,7 +16,7 @@ It's simpler to setup than alternatives such as **scanbd**, but you will need a 
 this version incorporates a few changes including:
 
 - [fix for a segmentation](https://github.com/abusenius/insaned/issues/15) fault by [bsdice](https://github.com/bsdice)
-- [various fixes including re-attaching a device](https://github.com/hannesrauhe/insaned)
+- [various fixes including re-attaching a device](https://github.com/hannesrauhe/insaned) by [hannesrauhe](https://github.com/hannesrauhe)
 - support for **[scanservjs](https://github.com/sbs20/scanservjs)** (requires `curl` also)
 - support for loading configuration via a `.env` file, see **[_example.env](./events/_example.env)**
 - `make debian` for creating a debian package 

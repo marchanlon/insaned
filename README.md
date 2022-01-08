@@ -1,150 +1,66 @@
-Insaned
+insaned
 =======
 
-Insaned is a simple linux daemon for polling button presses on SANE scanners.
+Insaned is a simple linux daemon for polling button presses on SANE-managed scanners. 
 
-[![Build Status](https://travis-ci.org/abusenius/insaned.svg?branch=master)](https://travis-ci.org/abusenius/insaned) [![Coverity Scan Build Status](https://scan.coverity.com/projects/11384/badge.svg)](https://scan.coverity.com/projects/abusenius-insaned)
+It's simpler to setup than alternatives such as **scanbd**, but you will need a scanner which **exposes buttons as sensors**.
 
-Description
------------
+> :small_blue_diamond: **this project is a fork**
+>
+> please see the original project https://github.com/abusenius/insaned
+>
+> or README-orig.md for more information.
 
-Insaned periodically polls your scanner using the SANE library and runs the corresponding event handler script when a button is pressed. Because of this, button presses are only detected every N milliseconds, so you will have to press and hold the button for at most N milliseconds until an event is fired. Insaned does only fire the same event once in 2500 ms to prevent unwanted repetitions.
+## updates in this version
 
-It should work with all backends that expose buttons as "Sensors". The daemon reads the value of all sensors every N milliseconds (default: 500) and starts an event handler script named by the sensor name. Polling does not result in a noticeable CPU load, but produces some I/O load. Therefore, it might not be a good idea to run this daemon on a laptop, since it will probably prevent USB bus from entering a low power mode or even keep the laptop awake (not tested yet).
+this version incorporates a few changes including:
 
-Currently, insaned was tested on:
-* Gentoo Linux with sane-backends-1.0.24 and a Canon LiDE 210 flatbed scanner (genesys backend, USB ID 04a9:190a)
-* Ubuntu 16.04.1 LTS with Canon LiDE 210
-* Raspberry Pi with HP Scanjet 2400c (thanks to [GaryA](https://github.com/GaryA))
-* Debian 8 running on a [CHIP](https://getchip.com/pages/chip) with Canon Lide 210 (thanks to [Coaxial](https://github.com/Coaxial))
-* FreeBSD 11.1 with Fujitsu ScanSnap S1500 (thanks to [displaced](https://github.com/displaced))
+- [fix for a segmentation](https://github.com/abusenius/insaned/issues/15) fault by [bsdice](https://github.com/bsdice)
+- [fix to allow re-attaching a device if disconnected](https://github.com/allgoewer/insaned/commit/9e4ef8dd77e3836ee9a8234e4bba205a8b40d055) by [allgoewer](https://github.com/allgoewer)
+- support for **[scanservjs](https://github.com/sbs20/scanservjs)** (requires `curl` also)
+- support for loading configuration via a `.env` file, see **[_example.env](./events/_example.env)**
+- `make debian` for creating a debian package 
 
+## installation
+a package compiled for `armv6` (compatible with a Raspberry Pi Zero W) is included in each **[release](https://gitlab.com/xeijin-dev/insaned/-/releases)**, ssh into your raspberry pi and use `wget` or `curl` to download the package, then `sudo dpkg -i insaned_0.0.x_armhf.deb` to install.
 
-Why
----
+for other operating systems/architectures see the build section below.
 
-I've tried [scanbuttond](http://scanbuttond.sourceforge.net/) and [scanbd](http://scanbd.sourceforge.net/).
+## usage
 
-* scanbuttond could not detect buttons on my scanner
-* scanbd is waaay too complicated, it requires to configure SANE for network scanning. I spend 2 evenings trying to make it work and failed.
-* I've heard rumors about sanebuttonsd, but couldn't find any documentation about it
+First check which compatible sensors/buttons your scanner has by running `insaned -L` - this should provide a list with names.
 
+Assuming you only want to use the 'scan' button -- rename `_example.env` to `.env` and edit for your scanner
 
-Supported devices
------------------
+for **[scanservjs](https://github.com/sbs20/scanservjs)**  support you will need an instance hosted either locally or remotely, change the `SCAN_SCRIPT` variable in your .env file to `scanservjs`.
 
-You can check if SANE exposes sensors of your scanner by running:
+once the above is complete, simply hit the 'Scan' button on your compatible scanner and the script should kick-in.
 
-    scanimage -A
+To get other buttons on your scanner working, you'll need to create a new script in `/etc/insaned/events` with the same name as listed in `insaned -L`. Use the `scanimage` and `scanservjs` scripts as examples.
 
-You should be able to see a list of detected sensors and their current state. If you press and hold a button while running scanimage -A, you should be able to see a different sensor value.
+## build
 
-For example, this is the output for my scanner, when I press the "file" button (note the [yes]):
+You will need `libsane-dev` installed on your machine.
 
-    All options specific to device `genesys:libusb:001:003':
-      Scan Mode:
-    ...
-    <snip>
-    ...
-      Sensors:
-        --scan[=(yes|no)] [no] [hardware]
-            Scan button
-        --file[=(yes|no)] [yes] [hardware]
-            File button
-        --email[=(yes|no)] [no] [hardware]
-            Email button
-        --copy[=(yes|no)] [no] [hardware]
-            Copy button
-        --extra[=(yes|no)] [no] [hardware]
-            Extra button
-      Buttons:
-        --clear-calibration
-            Clear calibration cache
+### debian
 
-In this case, insaned detects all of my 5 buttons and emits events named "scan", "file", "email", "copy" and "extra".
+first do an `apt install` of `debhelper`, then clone the source and execute `make debian` in the root. The `.deb` file will be placed in the parent directory.
 
+### other systemd distro
 
-Event Handler Scripts
----------------------
+run `make` in the root directory, you will need to ensure you copy over the event and systemd scripts to the appropriate locations for your distro see below for an example
 
-Event handler scripts are simple shell scripts. Insaned searches for them in /etc/insaned/events/ directory (configurable). The daemon passes current SANE device name as the first and only argument to the script, in case you need to distinguish between several scanners.
+```
+# copy binary and scripts
+sudo cp insaned /usr/bin
+sudo cp systemd/insaned.service /etc/systemd/system
+sudo touch /etc/default/insaned
+sudo systemctl start insaned
+sudo systemctl enable insaned
 
-All event handler scripts have to exist and have to have the executable flag set, otherwise insaned will print warnings. Create an empty executable file to silence the warning, e.g. like this:
+# copy over event scripts and make them executable
+sudo cp insaned/events /etc
+sudo chmod +x /etc/insaned/events/*
+```
 
-    touch /etc/insaned/events/scan
-    chmod +x /etc/insaned/events/scan
-
-
-Dependencies
-------------
-
-* SANE library version 1.0.23 or later (tested with: 1.0.23 - 1.0.27)
-* Recent GCC with support for C++11 standard (tested with: 4.8.2, 5.4.0, 6.4.0)
-
-
-Installation
-------------
-
-To compile insaned, run:
-
-    make
-
-in the project directory. The daemon will be created in the project directory and called "insaned". You can run it in foreground for testing purposes as follows:
-
-    ./insaned --dont-fork --events-dir=$PWD/events --log-file=$PWD/log.log -vv
-
-See also
-
-    ./insaned --help --list-sensors
-
-for more details.
-
-*Tips and tricks*
-
-If you happen to have a system where SANE headers (sane/sane.h) and libraries (libsane.so) are installed in an unusual location and simple `make` fails to compile insaned, try to provide paths to headers and libraries as follows:
-
-    CXXFLAGS=-I/path/to/your/usr/include LDFLAGS=-L/path/to/your/usr/lib make
-
-*Gentoo Linux*
-
-1. Add
-   [media-gfx/insaned/insaned-0.0.3.ebuild](https://raw.githubusercontent.com/abusenius/insaned/master/gentoo/media-gfx/insaned/insaned-0.0.3.ebuild) to media-gfx/insaned in your local overlay.
-2. cd $YOUR_OVERLAY/media-gfx/insaned
-3. ebuild insaned-0.0.3.ebuild manifest
-4. emerge insaned
-
-*Ubuntu Linux (64 bit)*
-
-1. Download [insaned_0.0.3-0ubuntu1_amd64.deb](https://github.com/abusenius/insaned/releases/download/v0.0.3/insaned_0.0.3-0ubuntu1_amd64.deb)
-2. sudo dpkg -i insaned_0.0.3-0ubuntu1_amd64.deb
-
-*FreeBSD*
-
-1. Use `gmake` instead of `make` to compile insaned.
-2. If `gmake` also doesn't work, see *Tips and tricks* above
-3. In order to automatically start insaned when the scanner is connected or turned on and stop it when the scanner is disconnected/turned off use provided [devd/insaned.conf](https://raw.githubusercontent.com/abusenius/insaned/master/freebsd/devd/insaned.conf.example) example
-
-
-Side note
----------
-
-I am not responsible for any physical or mental damage insaned might cause to you, your hardware or your pet. Use it on your own risk.
-
-That said, any help is welcomed. Feel free to contact me if you have any comments/suggestions/patches. Especially interesting are reports if it works with another scanners. Please make sure to include the output of "insaned -L" to your report, and, if you have any problems, also the output of "scanimage -A".
-
-
-TODO
-----
-
-The following features are planned:
-
-* Package for raspbian
-* Suspend polling while one of the configured processes are running
-* Suspend polling while another process is using the SANE library
-* CMake build
-* Packages for other linux distributions
-* More useful handler scripts
-* Handler script stub for starting a GUI frontend
-* Run daemon as user daemon when logging into a KDE/Gnome/whatever
-* Test with more hardware
 

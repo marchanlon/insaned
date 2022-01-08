@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # scanservjs (https://github.com/sbs20/scanservjs) - execute scan through scanservjs web interface
 # set up your .env file first - see _example.env for more info
 
@@ -17,36 +18,18 @@
 # you may also want to specify the file output directory, this must be done in the scanserv config file
 # see: https://github.com/sbs20/scanservjs/blob/master/docs/config.md for more information
 
+# get helper functions
+source "$SCRIPT_DIR/common"
 
-# TODO use what we get to parse first curl request for the actual device? 
-# could be USB rather than net...
-export SSJS_DEVICE_ID="net:$SANE_HOST:$DEVICE_ID" 
+# first GET current device (retrieves the first device found)
+#export SSJS_DEVICE_ID="net:$SANE_HOST:$DEVICE_ID" # not reliable (e.g. if scanner sleeps and assigned a new usb id)
+export SSJS_DEVICE_ID=$(ssjs_get_scanner_device)
 echo -e "SSJS_DEVICE_ID value is: $SSJS_DEVICE_ID" # debug
 
-# helper functions
-json_array() {
-  echo -n '['
-  while [ $# -gt 0 ]; do
-    x=${1//\\/\\\\}
-    echo -n \""${x//\"/\\\"}"\"
-    [ $# -gt 1 ] && echo -n ', '
-    shift
-  done
-  echo ']'
-}
-
-# first GET current devices
-echo -e "discovering devices"
-curl "$SSJS_PROTOCOL://$SSJS_HOST:$SSJS_PORT/context" \
-  -H 'Connection: keep-alive' \
-  -H 'Accept: */*' \
-  -H 'Referer: http://paperless.netwk.io:8080/' \
-  --compressed \
-  --insecure
 
 # then POST a request to scan image
 echo -e "scanning image ... this could take some time depending on the number of pages"
-# curl -vvv curl https://httpbin.org/post \
+#curl -vvv https://httpbin.org/post \
 curl "$SSJS_PROTOCOL://$SSJS_HOST:$SSJS_PORT/$SSJS_PATH" \
   -H "Connection: keep-alive" \
   -H "Accept: application/json" \
@@ -71,5 +54,4 @@ curl "$SSJS_PROTOCOL://$SSJS_HOST:$SSJS_PORT/$SSJS_PATH" \
     "index": 1
 }
 EOF
-
 

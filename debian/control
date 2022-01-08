@@ -8,7 +8,7 @@ Homepage: https://github.com/abusenius/insaned
 
 Package: insaned
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libsane (>=1.0.23)
+Depends: ${shlibs:Depends}, ${misc:Depends}, libsane (>=1.0.23), jq, curl
 Description: Simple daemon polling button presses on SANE scanners
  Insaned polls button presses on SANE scanners and executes user-defined scripts
  when a button is triggered

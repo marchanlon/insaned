@@ -1,3 +1,18 @@
+insaned (0.0.4) unstable; urgency=low
+  [ bsdice ]
+  * fix segmentation fault when no scanner is detected
+  [ hannesrauhe ]
+  * do not exit if scanner is offline on start
+  * fix: rescan for available devices after opening failed
+    (Scanners switch names after a restart, so insaned checks for available devices when opening fails)
+  * Introduce backoff and additional events for on/off
+  * deactivate debouncing for on/off events
+  [ xeijin ]
+  * support for initiating a scan via scanservjs - a modern web front-end for SANE (https://github.com/sbs20/scanservjs)
+  * .env driven configuration & new scan button script
+
+ -- bsdice, hannesrauhe & xeijin <xeijin@users.noreply.github.com>  Mon, 3 Jan 2022 00:30:00 +0000
+
 insaned (0.0.3-0ubuntu1) xenial; urgency=low
 
   * Autostart systemd service after installation
